@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Versao da release (ex.: v0.2.9-sc.1)
+        description: "Versao da release (exemplo v0.2.9-sc.1)"
         required: true
 permissions:
   contents: write
