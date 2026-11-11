@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Editor de vídeo do Segundo Cérebro: o logo (duas setas) com uma claquete laranja no canto, a mesma cor do aviso da IA no editor -->
+  <defs>
+    <linearGradient id="fundo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#151311"/>
+      <stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+    <linearGradient id="laranja" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffb26b"/>
+      <stop offset="1" stop-color="#f07a2a"/>
+    </linearGradient>
+  </defs>
+  <rect x="24" y="24" width="976" height="976" rx="220" fill="url(#fundo)"/>
+  <!-- logo do Segundo Cérebro, um pouco menor e para cima/esquerda para dar lugar à claquete -->
+  <g transform="translate(-95 -105) scale(0.84) translate(83 83)" fill="#f2f2f2">
+    <path d="M375 257 H527 Q534 260 529 266 L420 425 L529 584 Q534 592 527 597 H377 L262 432 Q257 425 262 418 Z"/>
+    <path d="M496 427 H646 L761 590 Q766 597 761 604 L646 767 H496 Q489 764 494 757 L603 597 L494 437 Q489 430 496 427 Z"/>
+  </g>
+  <!-- claquete -->
+  <g transform="translate(560 560)">
+    <rect x="0" y="0" width="400" height="400" rx="96" fill="url(#laranja)"/>
+    <rect x="0" y="0" width="400" height="400" rx="96" fill="none" stroke="#0a0a0a" stroke-width="18"/>
+    <g fill="#0a0a0a">
+      <!-- corpo -->
+      <rect x="78" y="188" width="244" height="148" rx="22"/>
+      <!-- tampa aberta, inclinada -->
+      <g transform="rotate(-16 92 168)">
+        <rect x="78" y="128" width="244" height="46" rx="10"/>
+      </g>
+    </g>
+    <!-- listras da tampa e do corpo -->
+    <g fill="url(#laranja)">
+      <g transform="rotate(-16 92 168)">
+        <path d="M118 128 h34 l-24 46 h-34 z"/>
+        <path d="M188 128 h34 l-24 46 h-34 z"/>
+        <path d="M258 128 h34 l-24 46 h-34 z"/>
+      </g>
+      <path d="M100 188 h34 l-24 34 h-34 z" opacity="0"/>
+      <rect x="104" y="214" width="192" height="8" rx="4" opacity="0.55"/>
+      <!-- triângulo de play no corpo -->
+      <path d="M182 246 L182 310 L238 278 Z"/>
+    </g>
+  </g>
+</svg>
