@@ -44,6 +44,7 @@ mod i18n;
 #[cfg(target_os = "ios")]
 mod ios;
 mod keymap;
+mod live;
 mod meters;
 mod motion_tiles;
 mod platform;

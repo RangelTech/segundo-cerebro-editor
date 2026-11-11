@@ -498,6 +498,88 @@ impl Studio {
         );
     }
 
+    /// Live mode (Segundo Cérebro): a request an agent sent through the
+    /// Automation server about the project on screen, run on this session
+    /// with the same bookkeeping as the window's own controls. `None` when
+    /// the window shows another project or none.
+    pub fn run_live(
+        &mut self,
+        path: &str,
+        op: concat_api::LiveOp,
+    ) -> Option<Result<concat_api::LiveReply, String>> {
+        use concat_api::{LiveOp, LiveReply};
+        let session = self.session.as_ref()?;
+        if !crate::live::same_folder(session.path(), path) {
+            return None;
+        }
+        let reply = match op {
+            LiveOp::View => Ok(LiveReply::View(session.view())),
+            LiveOp::Document => Ok(LiveReply::Document(session.document())),
+            LiveOp::Apply(command) => {
+                let name = command_name(&command);
+                self.end_burst();
+                self.flush_commit();
+                self.echo = None;
+                self.last_commit = None;
+                let session = self.session.as_mut()?;
+                match session.apply(command) {
+                    Ok(view) => {
+                        self.after_change();
+                        // the clip the agent just made is the one selected,
+                        // so the timeline shows where it landed
+                        if let Some(id) = view.created_id.as_ref()
+                            && self.timeline().clips.iter().any(|clip| &clip.id == id)
+                        {
+                            self.selection = vec![id.clone()];
+                        }
+                        self.show_live(&name);
+                        Ok(LiveReply::View(view))
+                    }
+                    Err(error) => {
+                        self.notify(&error, true);
+                        Err(error)
+                    }
+                }
+            }
+            LiveOp::Undo => {
+                self.undo();
+                self.show_live("Undo");
+                Ok(LiveReply::View(self.session.as_ref()?.view()))
+            }
+            LiveOp::Redo => {
+                self.redo();
+                self.show_live("Redo");
+                Ok(LiveReply::View(self.session.as_ref()?.view()))
+            }
+            LiveOp::Save(name) => {
+                self.flush_commit();
+                self.autosave.stop();
+                match self.session.as_mut()?.save(name.as_deref()) {
+                    Ok(()) => {
+                        self.dirty = false;
+                        Ok(LiveReply::Done)
+                    }
+                    Err(error) => Err(error),
+                }
+            }
+            LiveOp::SetVideo(video) => match self.session.as_mut()?.set_video(video) {
+                Ok(view) => {
+                    self.after_change();
+                    self.show_live("SetVideo");
+                    Ok(LiveReply::View(view))
+                }
+                Err(error) => Err(error),
+            },
+        };
+        Some(reply)
+    }
+
+    /// The mark an agent's edit leaves on screen: a toast naming it, so
+    /// the person sees what changed and who changed it.
+    fn show_live(&mut self, name: &str) {
+        self.notify(&format!("✦ Segundo Cérebro: {}", live_label(name)), false);
+    }
+
     /// Writes the document, on a worker. `announce` says so on success;
     /// a failure is always said.
     pub fn save(&mut self, announce: bool) {
@@ -539,4 +621,37 @@ impl Studio {
             .playback
             .set_clips(std::path::PathBuf::from(session.path()), specs);
     }
+}
+
+/// A command's name as the person reads it in the live-mode toast.
+fn live_label(name: &str) -> String {
+    let known = [
+        ("AddMedia", "importou um arquivo"),
+        ("AddClip", "colocou um clipe na timeline"),
+        ("PlaceClip", "colocou um clipe na timeline"),
+        ("SplitClip", "cortou um clipe"),
+        ("Split", "cortou um clipe"),
+        ("RemoveClip", "removeu um clipe"),
+        ("DeleteClips", "removeu clipes"),
+        ("MoveClip", "moveu um clipe"),
+        ("TrimClip", "aparou um clipe"),
+        ("AddTitle", "escreveu um título"),
+        ("SetClip", "ajustou um clipe"),
+        ("PatchClip", "ajustou um clipe"),
+        ("AddEffect", "aplicou um efeito"),
+        ("AddTransition", "aplicou uma transição"),
+        ("SetTimelineVideo", "mudou o formato do vídeo"),
+        ("SetVideo", "mudou o formato do vídeo"),
+        ("Undo", "desfez a última ação"),
+        ("Redo", "refez a ação"),
+    ];
+    for (key, label) in known {
+        if name == key || name.starts_with(key) {
+            return label.to_owned();
+        }
+    }
+    if name.starts_with("Batch") {
+        return "fez várias edições de uma vez".to_owned();
+    }
+    format!("editou ({name})")
 }

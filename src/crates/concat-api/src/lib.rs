@@ -238,6 +238,9 @@ pub struct Api {
     /// Which project folders are open on this machine, across this API
     /// and a window it is embedded in.
     open: OpenProjects,
+    /// Live mode: the window this API is embedded in, which runs requests
+    /// on the project on screen so the person sees each edit happen.
+    window: Option<Box<dyn WindowLink>>,
     titles: Titles,
     cutouts: Arc<Cutouts>,
     stabilizers: Arc<Stabilizers>,
@@ -305,6 +308,7 @@ impl Api {
             sessions: BTreeMap::new(),
             roots: Vec::new(),
             open: OpenProjects::default(),
+            window: None,
             events,
             jobs: Jobs::default(),
             dirs,
@@ -362,6 +366,13 @@ impl Api {
     /// round.
     pub fn share_open_projects(&mut self, open: OpenProjects) {
         self.open = open;
+    }
+
+    /// Live mode: requests on the project the window shows go to the
+    /// window, which runs them on its own session (the edit happens on
+    /// screen, in the undo history the person uses) instead of refusing.
+    pub fn share_window(&mut self, window: Box<dyn WindowLink>) {
+        self.window = Some(window);
     }
 
     /// Confines every write to `roots`: from here on a created project, an
@@ -437,6 +448,9 @@ impl Api {
     }
 
     fn run(&mut self, request: Request) -> Result<Reply, ApiError> {
+        if let Some(reply) = self.live(&request) {
+            return reply;
+        }
         let view = |view: EditorView| Ok(Reply::View(Box::new(view)));
         match request {
             Request::Version => Ok(Reply::Version(self.version())),
@@ -879,6 +893,95 @@ impl Api {
         Ok((width, height, pixels))
     }
 
+    /// Live mode: a request on the project the window shows, run by the
+    /// window. `None` when there is no window, the request is not about a
+    /// project, this API has the project open itself, or the window shows
+    /// another one: the request then runs here as before.
+    fn live(&mut self, request: &Request) -> Option<Result<Reply, ApiError>> {
+        self.window.as_ref()?;
+        let path = match request {
+            Request::ProjectOpen { path }
+            | Request::ProjectGet { path }
+            | Request::ProjectDocument { path }
+            | Request::ProjectSave { path, .. }
+            | Request::ProjectSetVideo { path, .. }
+            | Request::ProjectClose { path, .. }
+            | Request::EditApply { path, .. }
+            | Request::EditUndo { path }
+            | Request::EditRedo { path }
+            | Request::MediaImport { path, .. }
+            | Request::ExportRun { path, .. }
+            | Request::TemplateSave { path, .. }
+            | Request::PreviewFrame { path, .. } => path.clone(),
+            _ => return None,
+        };
+        if self.sessions.contains_key(&key_of(&path)) {
+            return None;
+        }
+        let op = match request {
+            Request::ProjectOpen { .. } | Request::ProjectGet { .. } => LiveOp::View,
+            Request::ProjectDocument { .. } => LiveOp::Document,
+            Request::ProjectSave { name, .. } => LiveOp::Save(name.clone()),
+            // the window keeps the project open: "close" only saves when asked
+            Request::ProjectClose { save, .. } => {
+                if *save {
+                    LiveOp::Save(None)
+                } else {
+                    LiveOp::View
+                }
+            }
+            Request::ProjectSetVideo { video, .. } => LiveOp::SetVideo(*video),
+            Request::EditApply { command, .. } => LiveOp::Apply((**command).clone()),
+            Request::EditUndo { .. } => LiveOp::Undo,
+            Request::EditRedo { .. } => LiveOp::Redo,
+            Request::MediaImport { file, .. } => match media::probe(file) {
+                Ok(probed) => LiveOp::Apply(Command::AddMedia {
+                    item: probed.to_new_media(),
+                }),
+                Err(error) => return Some(Err(ApiError::failed(error))),
+            },
+            // reading the picture or exporting: the window saves, and the
+            // request runs here on a copy read from the saved folder
+            _ => LiveOp::Save(None),
+        };
+        let closing = matches!(request, Request::ProjectClose { .. });
+        let copy = matches!(
+            request,
+            Request::ExportRun { .. } | Request::TemplateSave { .. } | Request::PreviewFrame { .. }
+        );
+        let answer = self.window.as_ref()?.run(&path, op)?;
+        let answer = match answer {
+            Ok(answer) => answer,
+            Err(error) => return Some(Err(refused(error))),
+        };
+        if closing {
+            return Some(Ok(Reply::Done(Done {})));
+        }
+        if copy {
+            return Some(self.on_copy(&path, request.clone()));
+        }
+        Some(Ok(match answer {
+            LiveReply::View(view) => Reply::View(Box::new(view)),
+            LiveReply::Document(document) => Reply::Document(document),
+            LiveReply::Done => Reply::Done(Done {}),
+        }))
+    }
+
+    /// Runs `request` on a session read from the folder the window just
+    /// saved, without claiming it (the window holds it): a frame or an
+    /// export of exactly what is on screen.
+    fn on_copy(&mut self, path: &str, request: Request) -> Result<Reply, ApiError> {
+        let info = projects::open(path).map_err(ApiError::failed)?;
+        let session = Session::open_info(&info).map_err(ApiError::failed)?;
+        let key = key_of(path);
+        self.sessions.insert(key.clone(), session);
+        let window = self.window.take();
+        let result = self.run(request);
+        self.window = window;
+        self.sessions.remove(&key);
+        result
+    }
+
     fn session(&self, path: &str) -> Result<&Session, ApiError> {
         self.sessions
             .get(&key_of(path))
@@ -1186,6 +1289,40 @@ fn encode_png(
     let mut writer = encoder.write_header()?;
     writer.write_image_data(pixels)?;
     writer.finish()
+}
+
+
+/// Live mode: what an agent asks of the project the window shows.
+#[derive(Clone, Debug)]
+pub enum LiveOp {
+    /// The editor's view of it.
+    View,
+    /// The whole document.
+    Document,
+    /// One edit, as the window's own controls would make it.
+    Apply(Command),
+    Undo,
+    Redo,
+    /// Writes it to its folder, under a new name when given.
+    Save(Option<String>),
+    /// The frame size and rate.
+    SetVideo(VideoSettings),
+}
+
+/// What the window answers a [`LiveOp`] with.
+#[derive(Clone)]
+pub enum LiveReply {
+    View(EditorView),
+    Document(serde_json::Value),
+    Done,
+}
+
+/// The window an API is embedded in, for live mode. `run` blocks until the
+/// window has run `op` on its event loop.
+pub trait WindowLink: Send {
+    /// Runs `op` on the project on screen when `path` is that project;
+    /// `None` when the window shows another project or none.
+    fn run(&self, path: &str, op: LiveOp) -> Option<Result<LiveReply, String>>;
 }
 
 #[cfg(test)]

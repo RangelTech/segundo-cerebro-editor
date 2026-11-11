@@ -766,6 +766,8 @@ impl SettingsPane {
                     let mut api = concat_api::Api::new(events)?;
                     api.share_exporter(exporter);
                     api.share_open_projects(open_projects);
+                    // live mode: an agent edits the project on screen, in front of the person
+                    api.share_window(Box::new(crate::live::Link));
                     Ok(api)
                 })
             });
