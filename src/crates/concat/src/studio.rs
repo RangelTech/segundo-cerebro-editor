@@ -457,6 +457,8 @@ pub struct ToastState {
     pub token: i32,
     pub message: String,
     pub failed: bool,
+    /// Said by the agent in live mode: shown at the top, in the agent's colour.
+    pub agent: bool,
 }
 
 /// Which edge of a clip a trim has hold of.

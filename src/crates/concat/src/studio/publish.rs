@@ -15,6 +15,16 @@ impl Studio {
         self.toast.token += 1;
         self.toast.message = message.into();
         self.toast.failed = failed;
+        self.toast.agent = false;
+    }
+
+    /// Live mode: the notice of an edit the agent made, at the top of the
+    /// window in the agent's colour, so the person sees who changed what.
+    pub fn notify_agent(&mut self, message: &str) {
+        self.toast.token += 1;
+        self.toast.message = message.into();
+        self.toast.failed = false;
+        self.toast.agent = true;
     }
 
     // ── publishing ──
@@ -63,6 +73,7 @@ impl Studio {
             token: self.toast.token,
             message: self.toast.message.as_str().into(),
             failed: self.toast.failed,
+            agent: self.toast.agent,
         });
     }
 

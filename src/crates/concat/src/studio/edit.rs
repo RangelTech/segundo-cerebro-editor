@@ -577,7 +577,7 @@ impl Studio {
     /// The mark an agent's edit leaves on screen: a toast naming it, so
     /// the person sees what changed and who changed it.
     fn show_live(&mut self, name: &str) {
-        self.notify(&format!("✦ Segundo Cérebro: {}", live_label(name)), false);
+        self.notify_agent(&format!("Segundo Cérebro {}", live_label(name)));
     }
 
     /// Writes the document, on a worker. `announce` says so on success;
