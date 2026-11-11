@@ -32,23 +32,23 @@
 [Setup]
 ; One id for the life of the product, so an install over an older one is
 ; an upgrade and not a second copy.
-AppId={{7B1E5C3A-3B9E-4F0B-9C6D-2F1D0C0A0C47}
-AppName=Concat
+AppId={{5A0C7E21-8B3D-4F6A-9E52-7C1B94D3A6F8}
+AppName=Segundo Cérebro Editor de vídeo
 AppVersion={#Version}
-AppVerName=Concat {#Version}
-AppPublisher=Concat contributors
-AppPublisherURL=https://github.com/jub0t/Concat
-AppSupportURL=https://github.com/jub0t/Concat/issues
-AppUpdatesURL=https://github.com/jub0t/Concat/releases
-DefaultDirName={autopf}\Concat
-DefaultGroupName=Concat
+AppVerName=Segundo Cérebro Editor de vídeo {#Version}
+AppPublisher=Rangel Tech (baseado no Concat, projeto aberto)
+AppPublisherURL=https://github.com/RangelTech/segundo-cerebro-editor
+AppSupportURL=https://github.com/RangelTech/segundo-cerebro-editor/issues
+AppUpdatesURL=https://github.com/RangelTech/segundo-cerebro-editor/releases
+DefaultDirName={autopf}\SegundoCerebroEditor
+DefaultGroupName=Segundo Cérebro Editor de vídeo
 DisableProgramGroupPage=yes
 LicenseFile=..\..\LICENSE
 OutputDir={#Out}
 OutputBaseFilename=Concat-{#Version}-windows-{#Suffix}-setup
 SetupIconFile=..\icons\concat.ico
 UninstallDisplayIcon={app}\concat.ico
-UninstallDisplayName=Concat
+UninstallDisplayName=Segundo Cérebro Editor de vídeo
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
@@ -108,11 +108,11 @@ Source: "{#Stage}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs crea
 Source: "..\icons\concat.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{autoprograms}\Concat"; Filename: "{app}\concat.exe"; IconFilename: "{app}\concat.ico"
+Name: "{autoprograms}\Segundo Cérebro Editor de vídeo"; Filename: "{app}\concat.exe"; IconFilename: "{app}\concat.ico"
 ; The way in when a graphics driver draws the window as coloured squares:
 ; it turns off Settings > General > Draw on the GPU, which that window hides.
-Name: "{autoprograms}\Concat (safe graphics)"; Filename: "{app}\concat.exe"; Parameters: "--software"; IconFilename: "{app}\concat.ico"
-Name: "{autodesktop}\Concat"; Filename: "{app}\concat.exe"; IconFilename: "{app}\concat.ico"; Tasks: desktopicon
+Name: "{autoprograms}\Segundo Cérebro Editor de vídeo (gráficos seguros)"; Filename: "{app}\concat.exe"; Parameters: "--software"; IconFilename: "{app}\concat.ico"
+Name: "{autodesktop}\Segundo Cérebro Editor de vídeo"; Filename: "{app}\concat.exe"; IconFilename: "{app}\concat.ico"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\concat.exe"; Description: "{cm:LaunchProgram,Concat}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\concat.exe"; Description: "{cm:LaunchProgram,Segundo Cérebro Editor de vídeo}"; Flags: nowait postinstall skipifsilent

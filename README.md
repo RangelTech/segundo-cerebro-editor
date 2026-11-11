@@ -1,3 +1,11 @@
+# Segundo Cérebro · Editor de vídeo
+
+Editor de vídeo do [Segundo Cérebro](https://brain.rangeltech.net), da Rangel Tech. É uma versão modificada do **Concat** (https://github.com/jub0t/Concat), projeto aberto de Jareer Abdullah e colaboradores, sob **AGPL-3.0-or-later**. Esta cópia muda o nome, o ícone e o instalador, como a política de marca do Concat pede para versões modificadas; o código-fonte completo está neste repositório, como a licença exige. "Concat" é marca do autor original e não é usada para nomear esta versão.
+
+O Segundo Cérebro baixa e instala este editor sozinho, em modo silencioso, quando o usuário pede para editar um vídeo; o agente (Hermes) edita pelo MCP (`--mcp`) e o usuário abre a janela completa para revisar e ajustar.
+
+---
+
 <p align="center">
   <img src="https://cdn.jsdelivr.net/gh/jub0t/Concat@main/assets/concat-mark-dark.png" alt="Concat" width="100" />
 </p>
