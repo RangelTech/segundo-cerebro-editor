@@ -4,6 +4,28 @@ Editor de vídeo do [Segundo Cérebro](https://brain.rangeltech.net), da Rangel 
 
 O Segundo Cérebro baixa e instala este editor sozinho, em modo silencioso, quando o usuário pede para editar um vídeo; o agente (Hermes) edita pelo MCP (`--mcp`) e o usuário abre a janela completa para revisar e ajustar.
 
+
+## O que é
+Editor de vídeo instalado pelo app do Segundo Cérebro (Cérebro Pro) quando o usuário pede para editar um vídeo. Estado: **no ar** (distribuído pelas releases deste repositório). Para quem: clientes do Segundo Cérebro no Windows.
+
+## Onde está no ar
+Não é um site: o app baixa o instalador da release deste repositório (`https://github.com/RangelTech/segundo-cerebro-editor/releases`), versão fixada em `second-brain/editor-video.js` (constante `ORIGENS`, hoje `v0.2.10-sc.3`, com sha256).
+
+## Onde faz o deploy
+Release manual pelo workflow **Release (Windows)** (`.github/workflows/release-editor.yml`, botão "Run workflow" com a tag `vX.Y.Z-sc.N`), que chama `build-app.yml`. Para o app passar a usar a versão nova, atualizar a tag e o sha256 em `second-brain/editor-video.js` e lançar o app. Voltar uma versão = apontar a constante para a tag anterior. Não passa pelo `vps_rt_infra` (não roda na VPS).
+
+## Como funciona por dentro
+Concat (Rust/Tauri) com nome, ícone e instalador trocados; o agente Hermes edita pelo MCP (`--mcp`) e o usuário revisa na janela completa. Licença AGPL-3.0-or-later: o código fica público aqui.
+
+## Segredos
+Só os de assinatura de código do build (certificados), como *secrets* do GitHub Actions deste repositório. Nenhum valor no git.
+
+## Como rodar e testar
+Ver "Development" no texto original abaixo (`cargo`/`npm`); o teste de ponta a ponta é pelo app: pedir ao Segundo Cérebro para editar um vídeo, ele baixa e abre o editor.
+
+## Dono e links
+Rangel Tech (Lucas Rangel). Spec 57 §3.1 (mantido e aberto). Painel: `painel.rangeltech.net`.
+
 ---
 
 <p align="center">
